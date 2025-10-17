@@ -1,0 +1,19 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Environments
+.env
+.venv/
+venv/
+
+# Data
+food_recommender/data/food_images/*
+food_recommender/data/restaurant_cache/*
+food_recommender/data/exports/*
+
+# OS
+.DS_Store
+Thumbs.db

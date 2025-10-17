@@ -1,0 +1,14 @@
+# Core
+python-dotenv>=1.0.1
+requests>=2.32.3
+Pillow>=10.4.0
+
+# GUI
+PyQt5>=5.15.11
+PyQtWebEngine>=5.15.7,<5.16
+
+# Database
+sqlite-utils>=3.36
+
+# (Optional) OpenAI SDK - pin if used
+openai>=1.50.0

@@ -1,0 +1,14 @@
+Collecting PyQtWebEngine
+  Downloading PyQtWebEngine-5.15.7-cp38-abi3-win_amd64.whl.metadata (1.9 kB)
+Requirement already satisfied: PyQt5-sip<13,>=12.13 in c:\users\kmg55\anaconda3\envs\rokey\lib\site-packages (from PyQtWebEngine) (12.17.1)
+Collecting PyQtWebEngine-Qt5<5.16.0,>=5.15.0 (from PyQtWebEngine)
+  Downloading PyQtWebEngine_Qt5-5.15.2-py3-none-win_amd64.whl.metadata (584 bytes)
+Requirement already satisfied: PyQt5>=5.15.4 in c:\users\kmg55\anaconda3\envs\rokey\lib\site-packages (from PyQtWebEngine) (5.15.11)
+Requirement already satisfied: PyQt5-Qt5<5.16.0,>=5.15.2 in c:\users\kmg55\anaconda3\envs\rokey\lib\site-packages (from PyQt5>=5.15.4->PyQtWebEngine) (5.15.2)
+Downloading PyQtWebEngine-5.15.7-cp38-abi3-win_amd64.whl (184 kB)
+Downloading PyQtWebEngine_Qt5-5.15.2-py3-none-win_amd64.whl (60.0 MB)
+   ---------------------------------------- 60.0/60.0 MB 9.8 MB/s  0:00:06
+Installing collected packages: PyQtWebEngine-Qt5, PyQtWebEngine
+
+Successfully installed PyQtWebEngine-5.15.7 PyQtWebEngine-Qt5-5.15.2
+

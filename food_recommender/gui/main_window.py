@@ -1,0 +1,99 @@
+from PyQt5.QtWidgets import (
+    QMainWindow, QWidget, QPushButton, QHBoxLayout, QVBoxLayout, QLabel, QFileDialog, QDockWidget
+)
+from PyQt5.QtCore import Qt
+from .map_widget import MapWidget
+from ..api.openai_vision import analyze_image
+from .preferences_panel import PreferencesPanel
+from ..utils.preferences import load_prefs
+
+
+class MainWindow(QMainWindow):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle("Smart Food Recommender")
+        self.resize(1200, 800)
+        self._setup_ui()
+
+    def _setup_ui(self):
+        central = QWidget(self)
+        self.setCentralWidget(central)
+        # 상단 검색창 제거, 최소한의 컨트롤만 유지
+        self.open_img_btn = QPushButton("이미지 선택", self)
+        self.search_btn = QPushButton("지역 주변 음식 찾기", self)
+        self.result_label = QLabel("태그 결과: -", self)
+        self.result_label.setWordWrap(True)
+        # 태그 표시를 가볍고 작게 (약 1/5 체감) - 작은 폰트와 낮은 최대 높이
+        self.result_label.setStyleSheet("font-size: 8pt; color: #555;")
+        self.result_label.setMaximumHeight(50)
+        # 최근 분석된 쿼리(검색어) 캐시
+        self._last_query = ""
+
+        top = QHBoxLayout()
+        top.addWidget(self.open_img_btn)
+        top.addWidget(self.search_btn)
+        top.addStretch(1)
+
+        self.map = MapWidget(self)
+
+        root = QVBoxLayout(central)
+        root.addLayout(top)
+        root.addWidget(self.map)
+        root.addWidget(self.result_label)
+
+        self.open_img_btn.clicked.connect(self._on_open_image)
+        self.search_btn.clicked.connect(self._on_search_clicked)
+
+        # 좌측 도킹: 사용자 선호/상태 입력 패널
+        dock = QDockWidget("내 정보", self)
+        dock.setObjectName("preferencesDock")
+        dock.setFeatures(QDockWidget.DockWidgetMovable | QDockWidget.DockWidgetFloatable)
+        self.pref_panel = PreferencesPanel(self)
+        dock.setWidget(self.pref_panel)
+        self.addDockWidget(0x1, dock)  # LeftDockWidgetArea
+        # 현재 저장된 prefs 캐시
+        self._prefs = load_prefs()
+        # 패널에서 값이 바뀌면 즉시 캐시 갱신
+        self.pref_panel.changed.connect(self._on_prefs_changed)
+        # 도킹 패널 너비를 절반으로 축소(측정 불가 시 창의 25%로 설정)
+        total_w = max(1, self.width())
+        curr = dock.width()
+        if curr > 0:
+            target_w = max(150, int(curr * 0.5))
+        else:
+            target_w = max(150, int(total_w * 0.25))
+        self.resizeDocks([dock], [target_w], Qt.Horizontal)
+
+
+    def _on_open_image(self):
+        path, _ = QFileDialog.getOpenFileName(self, "음식 이미지 선택", "", "Images (*.jpg *.jpeg *.png)")
+        if not path:
+            return
+        tags = analyze_image(path)
+        # 태그만 표시
+        cat = ", ".join(tags.get("category", []))
+        dishes = ", ".join(tags.get("dishes", []))
+        taste = ", ".join(tags.get("taste", []))
+        nut = ", ".join(tags.get("nutrition", []))
+        self.result_label.setText(f"태그 결과: category=[{cat}] dishes=[{dishes}] taste=[{taste}] nutrition=[{nut}]")
+        # 자동 검색 금지: 분석된 결과에서 검색어만 캐시하고 실제 검색은 버튼 클릭 시 수행
+        dishes_list = tags.get("dishes", []) or []
+        if dishes_list:
+            self._last_query = dishes_list[0]
+        else:
+            cats = tags.get("category", []) or []
+            self._last_query = cats[0] if cats else ""
+
+    def _on_search_clicked(self):
+        # 버튼 클릭 시에만 검색 수행: 지역 + 마지막 분석 쿼리
+        query = (self._last_query or "").strip()
+        if not query:
+            # 분석된 쿼리가 없다면 아무 것도 하지 않음
+            return
+        city = (self._prefs.get("city") or "").strip()
+        final_query = f"{city} {query}".strip() if city else query
+        self.map.search_by_url(final_query)
+
+    def _on_prefs_changed(self, prefs: dict):
+        # UI에서 변경된 환경을 캐시에 반영
+        self._prefs = dict(prefs or {})
