@@ -14,7 +14,6 @@ except Exception:
         sys.path.insert(0, str(ROOT))
     from food_recommender.gui.main_window import MainWindow  # type: ignore
 
-
 def main():
     app = QApplication(sys.argv)
     window = MainWindow()
