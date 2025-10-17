@@ -2,6 +2,7 @@ from PyQt5.QtWidgets import (
     QMainWindow, QWidget, QPushButton, QHBoxLayout, QVBoxLayout, QLabel, QFileDialog, QDockWidget
 )
 from PyQt5.QtCore import Qt
+from PyQt5.QtGui import QPixmap
 from .map_widget import MapWidget
 from ..api.openai_vision import analyze_image
 from .preferences_panel import PreferencesPanel
@@ -28,6 +29,14 @@ class MainWindow(QMainWindow):
         self.result_label.setMaximumHeight(50)
         # 최근 분석된 쿼리(검색어) 캐시
         self._last_query = ""
+        # 이미지 미리보기 영역(작은 정사각형)
+        self.image_preview = QLabel("미리보기", self)
+        self.image_preview.setAlignment(Qt.AlignCenter)
+        self.image_preview.setFixedSize(140, 140)
+        self.image_preview.setStyleSheet(
+            "border: 1px solid #ddd; background: #fafafa; color: #888;"
+        )
+        self._orig_pixmap = None  # 원본 QPixmap 캐시
 
         top = QHBoxLayout()
         top.addWidget(self.open_img_btn)
@@ -38,6 +47,7 @@ class MainWindow(QMainWindow):
 
         root = QVBoxLayout(central)
         root.addLayout(top)
+        # 중앙에는 지도와 결과만 배치
         root.addWidget(self.map)
         root.addWidget(self.result_label)
 
@@ -49,7 +59,15 @@ class MainWindow(QMainWindow):
         dock.setObjectName("preferencesDock")
         dock.setFeatures(QDockWidget.DockWidgetMovable | QDockWidget.DockWidgetFloatable)
         self.pref_panel = PreferencesPanel(self)
-        dock.setWidget(self.pref_panel)
+        # 도킹 컨테이너에 환경설정 패널 아래로 미리보기 정사각형 배치
+        dock_container = QWidget(self)
+        dock_layout = QVBoxLayout(dock_container)
+        dock_layout.setContentsMargins(6, 6, 6, 6)
+        dock_layout.setSpacing(6)
+        dock_layout.addWidget(self.pref_panel)
+        dock_layout.addWidget(self.image_preview, alignment=Qt.AlignHCenter)
+        dock_layout.addStretch(1)
+        dock.setWidget(dock_container)
         self.addDockWidget(0x1, dock)  # LeftDockWidgetArea
         # 현재 저장된 prefs 캐시
         self._prefs = load_prefs()
@@ -69,6 +87,8 @@ class MainWindow(QMainWindow):
         path, _ = QFileDialog.getOpenFileName(self, "음식 이미지 선택", "", "Images (*.jpg *.jpeg *.png)")
         if not path:
             return
+        # 1) 선택 즉시 이미지 미리보기 표시
+        self._set_preview_image(path)
         tags = analyze_image(path)
         # 태그만 표시
         cat = ", ".join(tags.get("category", []))
@@ -84,6 +104,25 @@ class MainWindow(QMainWindow):
             cats = tags.get("category", []) or []
             self._last_query = cats[0] if cats else ""
 
+    def _set_preview_image(self, path: str):
+        pm = QPixmap(path)
+        if pm.isNull():
+            self.image_preview.setText("이미지를 불러오지 못했습니다")
+            self._orig_pixmap = None
+            return
+        self._orig_pixmap = pm
+        self._update_preview_scaled()
+
+    def _update_preview_scaled(self):
+        if not self._orig_pixmap:
+            return
+        area = self.image_preview.size()
+        if area.width() <= 0 or area.height() <= 0:
+            return
+        scaled = self._orig_pixmap.scaled(area, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+        self.image_preview.setPixmap(scaled)
+        self.image_preview.setText("")
+
     def _on_search_clicked(self):
         # 버튼 클릭 시에만 검색 수행: 지역 + 마지막 분석 쿼리
         query = (self._last_query or "").strip()
@@ -97,3 +136,8 @@ class MainWindow(QMainWindow):
     def _on_prefs_changed(self, prefs: dict):
         # UI에서 변경된 환경을 캐시에 반영
         self._prefs = dict(prefs or {})
+
+    def resizeEvent(self, event):
+        super().resizeEvent(event)
+        # 창 크기 변경 시 미리보기 이미지도 부드럽게 리스케일
+        self._update_preview_scaled()
