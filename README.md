@@ -179,5 +179,17 @@ ROKEY/
 ### 📊 맛집 리뷰 연동
 - 방문한 맛집에 대한 개인 평가 및 재방문 추천
 
+## 동작 화면
+- 기본화면 
+<img width="1214" height="849" alt="image" src="https://github.com/user-attachments/assets/bfb1f269-43df-46b5-9bc1-8ac7896b026b" />
+- 불러온 이미지 및 이미지의 태그 출력
+<img width="1210" height="830" alt="image" src="https://github.com/user-attachments/assets/d1c3ee25-683e-4919-8400-7dca597fe172" />
+- 태그를 기반으로 지도 검색 화면 출력 
+<img width="1212" height="841" alt="image" src="https://github.com/user-attachments/assets/0eef8b01-7fdd-4309-8603-bf365e7cd396" />
+
+
+
+
+
 
 
