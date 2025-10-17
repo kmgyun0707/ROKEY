@@ -37,7 +37,7 @@ def analyze_image(image_path: str) -> Dict[str, Any]:
         client = OpenAI(api_key=api_key)
         image_b64 = _b64_of(image_path)
         mime = _guess_mime(image_path)
-        tools = build_tools(default_vocab())
+        tools = build_tools(default_vocab()) #tools로 정해진 태그 전달 
 
         messages = [
             {
@@ -63,11 +63,11 @@ def analyze_image(image_path: str) -> Dict[str, Any]:
 
         choice = resp.choices[0]
         msg = choice.message
-        tool_calls = getattr(msg, "tool_calls", None)
+        tool_calls = getattr(msg, "tool_calls", None) 
         if tool_calls:
             for call in tool_calls:
                 fn = call.function
-                if fn and fn.name == "emit_tags":
+                if fn and fn.name == "emit_tags": # function name check
                     # arguments is a JSON string per OpenAI function calling
                     args = json.loads(fn.arguments or "{}")
                     return {

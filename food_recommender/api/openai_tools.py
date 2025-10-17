@@ -2,6 +2,9 @@
 from typing import Dict, Any, List, Optional
 
 
+
+# Predefined vocabulary for food tagging
+# 미리 정의된 음식 태그 어휘
 DEFAULT_VOCAB: Dict[str, List[str]] = {
     "category": [
         "한식", "중식", "일식", "양식", "분식", "디저트", "카페/베이커리",
